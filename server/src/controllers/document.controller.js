@@ -15,8 +15,8 @@ export async function uploadDocument(req, res) {
         const document = await prisma.document.create({
             data: {
                 filename: req.file.filename,
-                originalname: req.file.originalname,
-                mimeType: req.file.mimeType,
+                originalName: req.file.originalname,
+                mimeType: req.file.mimetype,
                 size: req.file.size,
                 status: "UPLOADED",
             }

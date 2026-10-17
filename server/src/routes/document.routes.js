@@ -7,6 +7,7 @@ import {
   uploadDocument,
   listDocuments,
 } from "../controllers/document.controller.js";
+import { extractDocument } from "../controllers/indexing.controller.js";
 
 const router = Router();
 const uploadDir = path.resolve("uploads");
@@ -43,6 +44,7 @@ const upload = multer({
 
 router.get("/", listDocuments);
 router.post("/upload", upload.single("file"), uploadDocument);
+router.post("/:id/extract", extractDocument);
 
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {

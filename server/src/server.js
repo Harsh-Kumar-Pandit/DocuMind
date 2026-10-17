@@ -1,9 +1,9 @@
-
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import prisma from "./config/db.js";
+import documentRoutes from "./routes/document.routes.js";
 
 dotenv.config();
 
@@ -12,6 +12,9 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json({ limit: "1mb" }));
+
+app.use("/api/documents", documentRoutes);
+
 
 app.get("/api/health", async (req, res) => {
   try {
