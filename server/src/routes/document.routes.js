@@ -9,6 +9,16 @@ import {
 } from "../controllers/document.controller.js";
 import { extractDocument } from "../controllers/indexing.controller.js";
 import { embedDocument } from "../controllers/embedding.controller.js";
+import {
+  chatWithDocumentController,
+} from "../controllers/chat.controller.js";
+import {
+  createConversation,
+  listConversations,
+  getConversationMessages,
+  deleteConversation,
+  sendConversationMessage,
+} from "../controllers/conversation.controller.js";
 
 const router = Router();
 const uploadDir = path.resolve("uploads");
@@ -47,6 +57,24 @@ router.get("/", listDocuments);
 router.post("/upload", upload.single("file"), uploadDocument);
 router.post("/:id/extract", extractDocument);
 router.post("/:id/embed", embedDocument);
+router.post("/:id/chat", chatWithDocumentController);
+// Conversation history
+router.post("/:id/conversations", createConversation);
+router.get("/:id/conversations", listConversations);
+
+router.get(
+  "/conversations/:conversationId/messages",
+  getConversationMessages
+);
+
+router.delete(
+  "/conversations/:conversationId",
+  deleteConversation
+);
+router.post(
+  "/conversations/:conversationId/messages",
+  sendConversationMessage
+);
 
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {

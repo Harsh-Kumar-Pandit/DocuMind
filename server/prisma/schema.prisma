@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -26,22 +25,65 @@ model Document {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
-  chunks       DocumentChunk[]
+  chunks        DocumentChunk[]
+  conversations Conversation[]
 
   @@index([status])
   @@index([createdAt])
 }
 
 model DocumentChunk {
-  id         String   @id @default(cuid())
-  documentId String
-  content    String   @db.Text
-  chunkIndex Int
-  pageNumber Int?
-  createdAt  DateTime @default(now())
+  id             String          @id @default(cuid())
+  documentId     String
+  content        String          @db.Text
+  chunkIndex     Int
+  pageNumber     Int?
+  chunkEmbedding ChunkEmbedding?
+  createdAt      DateTime        @default(now())
 
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, chunkIndex])
   @@index([documentId])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model Conversation {
+  id         String   @id @default(cuid())
+  title      String   @default("New Chat")
+  documentId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  document Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([documentId, updatedAt])
+}
+
+model ChatMessage {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String      @db.Text
+  sources        Json?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model ChunkEmbedding {
+  id        BigInt                @id @default(autoincrement())
+  chunkId   String                @unique
+  embedding Unsupported("vector")
+
+  documentChunk DocumentChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([embedding])
 }

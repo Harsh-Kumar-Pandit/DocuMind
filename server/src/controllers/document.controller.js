@@ -39,27 +39,30 @@ export async function uploadDocument(req, res) {
     }
 }
 
+
 export async function listDocuments(req, res) {
-    try {
-        const documents = await prisma.document.findMany({
-            orderBy: { createdAt: "desc"},
-            select: {
-                id: true,
-                originalname: true,
-                size: true,
-                status: true,
-                createdAt: true,
-            }
-        })
+  try {
+    const documents = await prisma.document.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        originalName: true,
+        size: true,
+        status: true,
+        createdAt: true,
+      },
+    });
 
-        return res.json({
-            documents
-        })
-    } catch (error) {
-        console.error("Failed to list documents: ", error.message)
+    return res.status(200).json({
+      documents,
+    });
+  } catch (error) {
+    console.error("Failed to list documents:", error);
 
-        return res.status(500).json({
-            message: "Could not fetch documents.",
-        })
-    }
+    return res.status(500).json({
+      message: "Could not fetch documents.",
+    });
+  }
 }
