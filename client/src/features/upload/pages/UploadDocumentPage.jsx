@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   FileCheck2,
   Info,
+  KeyRound,
   LoaderCircle,
   RefreshCw,
   ShieldCheck,
@@ -64,6 +65,9 @@ export default function UploadDocumentPage() {
   const [uploadedDocument, setUploadedDocument] = useState(null);
   const [readyDocument, setReadyDocument] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [accessToken, setAccessToken] = useState(
+    () => localStorage.getItem("documind-access-token") || "",
+  );
 
   const chooseFile = (nextFile) => {
     const error = validateFile(nextFile);
@@ -121,6 +125,10 @@ export default function UploadDocumentPage() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (!accessToken.trim()) {
+      setServerError("An access token is required. Please request one from your administrator.");
+      return;
+    }
     const error = validateFile(file);
     if (error) return setFileError(error);
 
@@ -129,6 +137,7 @@ export default function UploadDocumentPage() {
     setFailedStep(null);
 
     try {
+      localStorage.setItem("documind-access-token", accessToken.trim());
       // Step 2: Upload PDF
       setActiveStep(2);
       setStageDescription("Uploading PDF to your secure workspace…");
@@ -234,6 +243,22 @@ export default function UploadDocumentPage() {
                   : "Files are processed in real stages: upload, text extraction, and vector embedding."}
               </p>
             </div>
+          </div>
+
+          <div className="upload-access-card">
+            <div className="upload-access-icon"><KeyRound size={17} /></div>
+            <div className="upload-access-copy">
+              <strong>Authorized access</strong>
+              <span>Enter the access token provided by your administrator to upload documents.</span>
+            </div>
+            <input
+              type="password"
+              value={accessToken}
+              onChange={(event) => setAccessToken(event.target.value)}
+              placeholder="Enter access token"
+              aria-label="Access token"
+              disabled={busy}
+            />
           </div>
 
           {isCompleted ? (

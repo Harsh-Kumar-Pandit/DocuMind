@@ -22,6 +22,7 @@ import {
   sendConversationMessage,
 } from "../controllers/conversation.controller.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { requireAccessToken } from "../middleware/require-access-token.js";
 
 const router = Router();
 router.use(authenticate);
@@ -59,7 +60,7 @@ const upload = multer({
 
 router.get("/", listDocuments);
 router.get("/:id/file", getDocumentFile);
-router.post("/upload", upload.single("file"), uploadDocument);
+router.post("/upload", requireAccessToken, upload.single("file"), uploadDocument);
 router.post("/:id/extract", extractDocument);
 router.post("/:id/embed", embedDocument);
 router.post("/:id/chat", chatWithDocumentController);

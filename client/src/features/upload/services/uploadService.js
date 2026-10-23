@@ -7,6 +7,9 @@ export async function uploadDocument(file) {
     method: "POST",
     body: formData,
     credentials: "include",
+    headers: {
+      "x-documind-access-token": localStorage.getItem("documind-access-token") || "",
+    },
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok)
