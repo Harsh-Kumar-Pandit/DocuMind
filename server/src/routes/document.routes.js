@@ -6,6 +6,7 @@ import fs from "node:fs";
 import {
   uploadDocument,
   listDocuments,
+  getDocumentFile,
 } from "../controllers/document.controller.js";
 import { extractDocument } from "../controllers/indexing.controller.js";
 import { embedDocument } from "../controllers/embedding.controller.js";
@@ -19,8 +20,10 @@ import {
   deleteConversation,
   sendConversationMessage,
 } from "../controllers/conversation.controller.js";
+import { authenticate } from "../middleware/authenticate.js";
 
 const router = Router();
+router.use(authenticate);
 const uploadDir = path.resolve("uploads");
 
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -37,7 +40,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 4 * 1024 * 1024,
     files: 1,
   },
   fileFilter: (req, file, cb) => {
@@ -54,6 +57,7 @@ const upload = multer({
 });
 
 router.get("/", listDocuments);
+router.get("/:id/file", getDocumentFile);
 router.post("/upload", upload.single("file"), uploadDocument);
 router.post("/:id/extract", extractDocument);
 router.post("/:id/embed", embedDocument);
@@ -83,7 +87,7 @@ router.use((error, req, res, next) => {
     return res.status(status).json({
       message:
         error.code === "LIMIT_FILE_SIZE"
-          ? "PDF must be 10 MB or smaller."
+          ? "PDF must be 4 MB or smaller."
           : error.message,
     });
   }

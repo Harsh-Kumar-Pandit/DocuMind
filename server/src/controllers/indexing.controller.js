@@ -8,8 +8,8 @@ export async function extractDocument(req, res) {
   let document;
 
   try {
-    document = await prisma.document.findUnique({
-      where: { id },
+    document = await prisma.document.findFirst({
+      where: { id, ownerId: req.user.id },
     });
 
     if (!document) {

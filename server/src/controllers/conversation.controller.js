@@ -5,8 +5,8 @@ export async function createConversation(req, res) {
   try {
     const { id: documentId } = req.params;
 
-    const document = await prisma.document.findUnique({
-      where: { id: documentId },
+    const document = await prisma.document.findFirst({
+      where: { id: documentId, ownerId: req.user.id },
       select: { id: true },
     });
 
@@ -36,8 +36,8 @@ export async function listConversations(req, res) {
   try {
     const { id: documentId } = req.params;
 
-    const document = await prisma.document.findUnique({
-      where: { id: documentId },
+    const document = await prisma.document.findFirst({
+      where: { id: documentId, ownerId: req.user.id },
       select: { id: true },
     });
 
@@ -48,7 +48,7 @@ export async function listConversations(req, res) {
     }
 
     const conversations = await prisma.conversation.findMany({
-      where: { documentId },
+      where: { documentId, document: { ownerId: req.user.id } },
       orderBy: { updatedAt: "desc" },
       include: {
         _count: {
@@ -69,10 +69,14 @@ export async function listConversations(req, res) {
 export async function getConversationMessages(req, res) {
   try {
     const { conversationId } = req.params;
+    const { documentId } = req.query;
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      select: { id: true },
+    const conversation = await prisma.conversation.findFirst({
+      where: {
+        id: conversationId,
+        document: { ownerId: req.user.id },
+      },
+      select: { id: true, documentId: true },
     });
 
     if (!conversation) {
@@ -81,12 +85,22 @@ export async function getConversationMessages(req, res) {
       });
     }
 
+    if (documentId && conversation.documentId !== documentId) {
+      return res.status(400).json({
+        message: "Conversation does not belong to the specified document.",
+      });
+    }
+
     const messages = await prisma.chatMessage.findMany({
       where: { conversationId },
       orderBy: { createdAt: "asc" },
     });
 
-    return res.status(200).json({ messages });
+    return res.status(200).json({
+      conversationId,
+      documentId: conversation.documentId,
+      messages,
+    });
   } catch (error) {
     console.error("Load messages failed:", error.message);
     return res.status(500).json({
@@ -98,15 +112,25 @@ export async function getConversationMessages(req, res) {
 export async function deleteConversation(req, res) {
   try {
     const { conversationId } = req.params;
+    const { documentId } = req.query;
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      select: { id: true },
+    const conversation = await prisma.conversation.findFirst({
+      where: {
+        id: conversationId,
+        document: { ownerId: req.user.id },
+      },
+      select: { id: true, documentId: true },
     });
 
     if (!conversation) {
       return res.status(404).json({
         message: "Conversation not found.",
+      });
+    }
+
+    if (documentId && conversation.documentId !== documentId) {
+      return res.status(400).json({
+        message: "Conversation does not belong to the specified document.",
       });
     }
 
@@ -129,7 +153,7 @@ export async function deleteConversation(req, res) {
 export async function sendConversationMessage(req, res) {
   try {
     const { conversationId } = req.params;
-    const { question } = req.body;
+    const { question, documentId } = req.body;
 
     if (typeof question !== "string" || !question.trim()) {
       return res.status(400).json({
@@ -137,17 +161,27 @@ export async function sendConversationMessage(req, res) {
       });
     }
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
+    const conversation = await prisma.conversation.findFirst({
+      where: {
+        id: conversationId,
+        document: { ownerId: req.user.id },
+      },
       select: {
         id: true,
         documentId: true,
+        document: { select: { ownerId: true } },
       },
     });
 
     if (!conversation) {
       return res.status(404).json({
         message: "Conversation not found.",
+      });
+    }
+
+    if (documentId && conversation.documentId !== documentId) {
+      return res.status(400).json({
+        message: "Conversation does not belong to the specified document.",
       });
     }
 

@@ -1,8 +1,11 @@
 import { chatWithDocument } from "../services/chat.service.js";
+import prisma from "../config/db.js";
 
 export async function chatWithDocumentController(req, res) {
   try {
     const { id } = req.params;
+    const document = await prisma.document.findFirst({ where: { id, ownerId: req.user.id }, select: { id: true } });
+    if (!document) return res.status(404).json({ message: "Document not found." });
     const { question } = req.body;
 
     if (typeof question !== "string" || !question.trim()) {
