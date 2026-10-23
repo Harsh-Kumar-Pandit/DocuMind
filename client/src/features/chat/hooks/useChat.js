@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { chatService } from "../services/chatService";
 import {
   isDocumentReady,
@@ -10,6 +10,8 @@ import {
 
 export default function useChat() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const isChatRoute = location.pathname.startsWith("/app/chat");
 
   // Document states
   const [documents, setDocuments] = useState([]);
@@ -38,7 +40,7 @@ export default function useChat() {
   const activeConversationRef = useRef(null);
   const activeDocRequestIdRef = useRef(0);
   const activeMsgRequestIdRef = useRef(0);
-  const isCreatingConversationRef = useRef(false);
+  const creatingConversationPromiseRef = useRef({});
 
   // In-memory caches to make document switching instantaneous (Bug 2 fix)
   const conversationsCacheRef = useRef({}); // { [docId]: Conversation[] }
@@ -155,47 +157,58 @@ export default function useChat() {
   const createConversation = useCallback(
     async (documentId) => {
       if (!documentId) return null;
-      if (isCreatingConversationRef.current) return null;
-      isCreatingConversationRef.current = true;
+      if (creatingConversationPromiseRef.current[documentId]) {
+        return creatingConversationPromiseRef.current[documentId];
+      }
       setConversationError("");
 
-      try {
-        const data = await chatService.createConversation(documentId);
-        const newConv = data.conversation;
+      const promise = (async () => {
+        try {
+          const data = await chatService.createConversation(documentId);
+          const newConv = data.conversation;
 
-        const currentList = conversationsCacheRef.current[documentId] || [];
-        const nextList = [
-          newConv,
-          ...currentList.filter((c) => c.id !== newConv.id),
-        ];
-        conversationsCacheRef.current[documentId] = nextList;
+          const currentList = conversationsCacheRef.current[documentId] || [];
+          const nextList = [
+            newConv,
+            ...currentList.filter((c) => c.id !== newConv.id),
+          ];
+          conversationsCacheRef.current[documentId] = nextList;
 
-        if (selectedDocumentRef.current?.id === documentId) {
-          setConversations(nextList);
-          activeConversationRef.current = newConv;
-          setActiveConversation(newConv);
-          lastActiveConvRef.current[documentId] = newConv.id;
-          messagesCacheRef.current[newConv.id] = [];
-          setMessages([]);
+          if (selectedDocumentRef.current?.id === documentId) {
+            setConversations(nextList);
+            activeConversationRef.current = newConv;
+            setActiveConversation(newConv);
+            lastActiveConvRef.current[documentId] = newConv.id;
+            messagesCacheRef.current[newConv.id] = [];
+            setMessages([]);
+            setMessagesLoading(false);
 
-          setSearchParams(
-            (prev) => {
-              const next = new URLSearchParams(prev);
-              next.set("document", documentId);
-              next.set("conversation", newConv.id);
-              return next;
-            },
-            { replace: true },
-          );
+            setSearchParams(
+              (prev) => {
+                const next = new URLSearchParams(prev);
+                next.set("document", documentId);
+                next.set("conversation", newConv.id);
+                return next;
+              },
+              { replace: true },
+            );
+          }
+
+          return newConv;
+        } catch (error) {
+          setConversationError(error.message || "Could not create conversation.");
+          return null;
+        } finally {
+          delete creatingConversationPromiseRef.current[documentId];
+          if (selectedDocumentRef.current?.id === documentId) {
+            setMessagesLoading(false);
+            setConversationsLoading(false);
+          }
         }
+      })();
 
-        return newConv;
-      } catch (error) {
-        setConversationError(error.message || "Could not create conversation.");
-        return null;
-      } finally {
-        isCreatingConversationRef.current = false;
-      }
+      creatingConversationPromiseRef.current[documentId] = promise;
+      return promise;
     },
     [setSearchParams],
   );
@@ -255,6 +268,7 @@ export default function useChat() {
           selectedDocumentRef.current?.id === documentId
         ) {
           setConversationsLoading(false);
+          setMessagesLoading(false);
         }
       }
     },
@@ -312,7 +326,20 @@ export default function useChat() {
         return;
       }
 
-      if (doc.id === selectedDocumentRef.current?.id) return;
+      // If it's already the selected document:
+      if (doc.id === selectedDocumentRef.current?.id) {
+        if (
+          targetConversationId &&
+          activeConversationRef.current?.id !== targetConversationId
+        ) {
+          const cached = conversationsCacheRef.current[doc.id];
+          const matched = cached?.find((c) => c.id === targetConversationId);
+          if (matched) {
+            openConversation(matched, doc.id);
+          }
+        }
+        return;
+      }
 
       // Immediately set selected document
       selectedDocumentRef.current = doc;
@@ -394,10 +421,7 @@ export default function useChat() {
         setReady(true);
         setProcessing(false);
         setProcessingError("");
-        // If not cached, or to re-sync conversations
-        if (!cachedConvs) {
-          loadConversations(doc.id, targetConversationId);
-        }
+        loadConversations(doc.id, targetConversationId);
       } else if (isDocumentProcessing(doc)) {
         setReady(false);
         setProcessing(true);
@@ -433,69 +457,91 @@ export default function useChat() {
         setMessagesLoading(false);
       }
     },
-    [loadConversations, setSearchParams],
+    [loadConversations, openConversation, setSearchParams],
   );
 
-  // 7. Initial load effect: load documents ONCE on mount
+  // 7. Synchronize documents and route state
   useEffect(() => {
     let ignore = false;
 
-    async function init() {
-      setDocumentLoading(true);
-      setDocumentError("");
-      try {
-        const data = await chatService.listDocuments();
-        if (ignore) return;
-        const docList = data.documents || [];
-        setDocuments(docList);
-        setDocumentLoading(false);
+    async function sync() {
+      const urlDocId = searchParams.get("document");
+      const urlConvId = searchParams.get("conversation");
 
-        if (!docList || docList.length === 0) {
-          setSelectedDocument(null);
-          selectedDocumentRef.current = null;
-          setReady(false);
+      const hasUrlDocInState = urlDocId
+        ? documents.some((d) => d.id === urlDocId)
+        : false;
+
+      let currentDocs = documents;
+
+      // Determine if documents need to be fetched from backend:
+      // 1. If we have not loaded documents yet (currentDocs.length === 0)
+      // 2. Or if urlDocId was specified in URL but is NOT in current documents list
+      // 3. Or if we are on /app/chat and have no selected document
+      const needsFetch =
+        currentDocs.length === 0 ||
+        (urlDocId && !hasUrlDocInState) ||
+        (isChatRoute && !selectedDocumentRef.current);
+
+      if (needsFetch) {
+        setDocumentLoading(true);
+        setDocumentError("");
+        try {
+          const data = await chatService.listDocuments();
+          if (ignore) return;
+          currentDocs = data.documents || [];
+          setDocuments(currentDocs);
+        } catch (err) {
+          if (ignore) return;
+          setDocumentError(err.message || "Could not load documents.");
+          setDocumentLoading(false);
           return;
+        } finally {
+          if (!ignore) {
+            setDocumentLoading(false);
+          }
         }
+      }
 
-        const preferredDocId = searchParams.get("document");
-        const preferredConvId = searchParams.get("conversation");
-        const preferred = preferredDocId
-          ? docList.find((d) => d.id === preferredDocId)
+      if (ignore) return;
+
+      if (!currentDocs || currentDocs.length === 0) {
+        setSelectedDocument(null);
+        selectedDocumentRef.current = null;
+        setReady(false);
+        return;
+      }
+
+      // If we are on chat route or urlDocId was explicitly provided, ensure a document is selected
+      if (isChatRoute || urlDocId) {
+        const matched = urlDocId
+          ? currentDocs.find((d) => d.id === urlDocId)
           : null;
-        const toSelect = preferred || docList[0];
+        const fallback =
+          selectedDocumentRef.current &&
+          currentDocs.some((d) => d.id === selectedDocumentRef.current.id)
+            ? selectedDocumentRef.current
+            : currentDocs[0];
+        const targetDoc = matched || fallback;
 
-        selectDocument(toSelect, preferredConvId);
-      } catch (err) {
-        if (ignore) return;
-        setDocumentError(err.message || "Could not load documents.");
-        setDocumentLoading(false);
+        if (targetDoc) {
+          if (
+            targetDoc.id !== selectedDocumentRef.current?.id ||
+            !selectedDocumentRef.current ||
+            (urlConvId && activeConversationRef.current?.id !== urlConvId)
+          ) {
+            selectDocument(targetDoc, urlConvId);
+          }
+        }
       }
     }
 
-    init();
+    sync();
 
     return () => {
       ignore = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // 8. Handle external navigation (e.g. from /app/history or direct URL link)
-  useEffect(() => {
-    const urlDocId = searchParams.get("document");
-    if (!urlDocId || documentLoading || documents.length === 0) return;
-
-    if (urlDocId !== selectedDocumentRef.current?.id) {
-      const found = documents.find((d) => d.id === urlDocId);
-      if (found) {
-        queueMicrotask(() => {
-          if (urlDocId !== selectedDocumentRef.current?.id) {
-            selectDocument(found, searchParams.get("conversation"));
-          }
-        });
-      }
-    }
-  }, [documentLoading, documents, searchParams, selectDocument]);
+  }, [isChatRoute, searchParams, selectDocument]);
 
   // 9. Start a fresh conversation (explicit New Chat action only)
   const startNewConversation = useCallback(async () => {
@@ -547,6 +593,17 @@ export default function useChat() {
         lastActiveConvRef.current[currentDoc.id] = convToUse.id;
       }
 
+      // Optimistic user message: immediately show question in the chat!
+      const tempUserMsgId = `temp-user-${Date.now()}`;
+      const optimisticUserMsg = {
+        id: tempUserMsgId,
+        conversationId: convToUse.id,
+        role: "USER",
+        content: trimmed,
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((curr) => [...curr, optimisticUserMsg]);
       setSending(true);
       setConversationError("");
 
@@ -560,7 +617,8 @@ export default function useChat() {
 
         if (data.userMessage && data.assistantMessage) {
           setMessages((curr) => {
-            const next = [...curr, data.userMessage, data.assistantMessage];
+            const withoutTemp = curr.filter((m) => m.id !== tempUserMsgId);
+            const next = [...withoutTemp, data.userMessage, data.assistantMessage];
             messagesCacheRef.current[convToUse.id] = next;
             return next;
           });
@@ -588,6 +646,8 @@ export default function useChat() {
         activeConversationRef.current = updatedConv;
         setActiveConversation(updatedConv);
       } catch (error) {
+        // Remove optimistic user message on failure so it does not remain as a ghost message
+        setMessages((curr) => curr.filter((m) => m.id !== tempUserMsgId));
         setConversationError(error.message || "Could not send message.");
         throw error;
       } finally {

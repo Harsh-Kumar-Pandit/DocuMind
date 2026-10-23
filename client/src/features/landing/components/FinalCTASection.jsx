@@ -3,19 +3,23 @@ import Button from "../../../components/ui/Button";
 
 export default function FinalCTASection() {
   return (
-    <section className="final-cta shell">
-      <div>
-        <span className="eyebrow">Ready when you are</span>
-        <h2>Turn your PDFs into answers.</h2>
-        <p>Give your documents a little more room to think.</p>
-      </div>
-      <div className="cta-actions">
-        <Button href="/signup">
-          Get started <ArrowRight size={16} />
-        </Button>
-        <Button href="/signin" variant="light">
-          Sign in
-        </Button>
+    <section className="final-cta-section" aria-label="Call to action">
+      <div className="shell">
+        <div className="final-cta-card">
+          <div className="final-cta-content">
+            <h2 className="final-cta-title">
+              Ready to unlock knowledge from your documents?
+            </h2>
+            <p className="final-cta-sub">
+              Join thousands of learners, researchers and professionals using DocuMind.
+            </p>
+          </div>
+          <div className="final-cta-action">
+            <Button href="/signup" className="final-cta-btn">
+              Get started — It's Free <ArrowRight size={15} />
+            </Button>
+          </div>
+        </div>
       </div>
     </section>
   );

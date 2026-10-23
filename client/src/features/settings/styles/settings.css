@@ -162,6 +162,34 @@
   border-color: #e8b0b9;
 }
 
+.settings-select-label { color: #7b809a; font-size: 12px; margin-bottom: 7px; }
+.settings-select {
+  border: 1px solid #e2e0ef;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #21253d;
+  background: #fff;
+  font-size: 12px;
+  outline: none;
+}
+.settings-select:focus { border-color: #5938f5; }
+.settings-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  border: 1px solid #f0cbd1;
+  border-radius: 9px;
+  background: #fff7f8;
+  color: #bb4e62;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.settings-danger-btn:disabled { opacity: 0.6; cursor: wait; }
+.settings-notice { color: #5d5a91; font-size: 11px; margin: 12px 0 0; }
+
 @media (max-width: 820px) {
   .settings-grid {
     grid-template-columns: 1fr;

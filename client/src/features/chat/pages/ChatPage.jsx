@@ -99,6 +99,7 @@ export default function ChatPage() {
         <MessageList
           messages={chat?.messages}
           loading={chat?.messagesLoading}
+          sending={chat?.sending}
           ready={chat?.ready}
           documentName={chat?.selectedDocument?.originalName}
         />

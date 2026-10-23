@@ -107,11 +107,9 @@ async function askOpenRouter(question, context) {
           },
         ],
         temperature: 0.2,
-        max_tokens: 500,
-        reasoning: {
-          effort: "low",
-          exclude: true,
-        },
+        // Some free OpenRouter models spend part of the budget on hidden
+        // reasoning, so 500 can leave no room for visible answer content.
+        max_tokens: 1200,
       }),
       signal: AbortSignal.timeout(45_000),
     }
@@ -127,7 +125,12 @@ async function askOpenRouter(question, context) {
     );
   }
 
-  const answer = data.choices?.[0]?.message?.content;
+  const rawAnswer = data.choices?.[0]?.message?.content;
+  const answer = Array.isArray(rawAnswer)
+    ? rawAnswer
+        .map((part) => (typeof part === "string" ? part : part?.text || ""))
+        .join("")
+    : rawAnswer;
 
 if (
   typeof answer !== "string" ||
@@ -155,7 +158,7 @@ if (
 }
 
 
-export async function chatWithDocument(documentId, question) {
+export async function chatWithDocument(documentId, question, responseLength = "balanced") {
   if (typeof question !== "string" || !question.trim()) {
     throw new Error("Question is required.");
   }
@@ -183,7 +186,15 @@ export async function chatWithDocument(documentId, question) {
     .slice(0, 10_000);
 
   // 3. Call OpenRouter directly. Gemini is disabled for now.
-  const aiResult = await askOpenRouter(question.trim(), context);
+  const lengthInstruction = {
+    concise: "Keep the answer very concise, using only the essential points.",
+    balanced: "Give a clear answer with a reasonable amount of detail.",
+    detailed: "Give a thorough answer with helpful detail while staying focused.",
+  }[responseLength] || "Give a clear answer with a reasonable amount of detail.";
+  const aiResult = await askOpenRouter(
+    `${question.trim()}\n\nResponse preference: ${lengthInstruction}`,
+    context
+  );
 
   return {
     answer: aiResult.answer,

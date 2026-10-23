@@ -1,17 +1,32 @@
 export default function Button({
   children,
   className = "",
-  href = "#",
+  href,
   variant = "primary",
+  onClick,
+  type = "button",
   ...props
 }) {
+  if (href) {
+    return (
+      <a
+        className={`button button-${variant} ${className}`}
+        href={href}
+        onClick={onClick}
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  }
   return (
-    <a
+    <button
       className={`button button-${variant} ${className}`}
-      href={href}
+      type={type}
+      onClick={onClick}
       {...props}
     >
       {children}
-    </a>
+    </button>
   );
 }

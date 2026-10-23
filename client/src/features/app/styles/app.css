@@ -6,9 +6,9 @@
 :root {
   --sidebar-width: 280px;
   --topbar-height: 68px;
-  --color-primary: #5938f5;
-  --color-primary-hover: #4726de;
-  --color-primary-light: #eeeaff;
+  --color-primary: #5938ff;
+  --color-primary-hover: #4828ea;
+  --color-primary-light: #f2efff;
   --color-bg-workspace: #f8f8fd;
   --color-surface: #ffffff;
   --color-border: #e7e6f1;

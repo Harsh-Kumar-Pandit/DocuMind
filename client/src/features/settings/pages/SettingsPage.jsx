@@ -1,16 +1,46 @@
 import {
+  Bot,
   LogOut,
   Settings as SettingsIcon,
   ShieldCheck,
+  Trash2,
   UserRound,
 } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../auth/hooks/useAuth";
+import { chatService } from "../../chat/services/chatService";
 import "../styles/settings.css";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [responseLength, setResponseLength] = useState(
+    () => localStorage.getItem("documind-response-length") || "balanced"
+  );
+  const [clearing, setClearing] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  const saveResponseLength = (value) => {
+    setResponseLength(value);
+    localStorage.setItem("documind-response-length", value);
+    setNotice("AI response preference saved.");
+    setTimeout(() => setNotice(""), 2200);
+  };
+
+  const clearHistory = async () => {
+    if (!window.confirm("Delete all conversations and chat messages? This cannot be undone.")) return;
+    setClearing(true);
+    setNotice("");
+    try {
+      const result = await chatService.clearAllConversations();
+      setNotice(`${result.deleted || 0} conversation(s) cleared.`);
+    } catch (error) {
+      setNotice(error.message || "Could not clear chat history.");
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const signOut = async () => {
     await logout();
@@ -32,6 +62,30 @@ export default function SettingsPage() {
 
       {/* Grid */}
       <div className="settings-grid">
+        <section className="settings-card">
+          <div className="settings-section-heading">
+            <div className="settings-section-icon"><Bot size={18} /></div>
+            <div><h2>AI Preferences</h2><p>Choose how detailed DocuMind answers should be.</p></div>
+          </div>
+          <label className="settings-select-label" htmlFor="response-length">Response length</label>
+          <select id="response-length" className="settings-select" value={responseLength} onChange={(event) => saveResponseLength(event.target.value)}>
+            <option value="concise">Concise</option>
+            <option value="balanced">Balanced</option>
+            <option value="detailed">Detailed</option>
+          </select>
+        </section>
+
+        <section className="settings-card">
+          <div className="settings-section-heading">
+            <div className="settings-section-icon"><Trash2 size={18} /></div>
+            <div><h2>Chat History</h2><p>Remove all saved conversations from your workspace.</p></div>
+          </div>
+          <button className="settings-danger-btn" type="button" onClick={clearHistory} disabled={clearing}>
+            <Trash2 size={16} /> <span>{clearing ? "Clearing..." : "Clear all chat history"}</span>
+          </button>
+          {notice && <p className="settings-notice" role="status">{notice}</p>}
+        </section>
+
         {/* Account Info Card */}
         <section className="settings-card">
           <div className="settings-section-heading">

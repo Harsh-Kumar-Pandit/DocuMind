@@ -37,8 +37,14 @@ export const chatService = {
   sendMessage: (conversationId, question, documentId) =>
     request(`/api/documents/conversations/${conversationId}/messages`, {
       method: "POST",
-      body: JSON.stringify({ question, documentId }),
+      body: JSON.stringify({
+        question,
+        documentId,
+        responseLength: localStorage.getItem("documind-response-length") || "balanced",
+      }),
     }),
+  clearAllConversations: () =>
+    request("/api/documents/conversations", { method: "DELETE" }),
   deleteConversation: (conversationId, documentId) => {
     const query = documentId ? `?documentId=${encodeURIComponent(documentId)}` : "";
     return request(`/api/documents/conversations/${conversationId}${query}`, {

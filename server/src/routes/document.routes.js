@@ -18,6 +18,7 @@ import {
   listConversations,
   getConversationMessages,
   deleteConversation,
+  deleteAllConversations,
   sendConversationMessage,
 } from "../controllers/conversation.controller.js";
 import { authenticate } from "../middleware/authenticate.js";
@@ -70,6 +71,8 @@ router.get(
   "/conversations/:conversationId/messages",
   getConversationMessages
 );
+
+router.delete("/conversations", deleteAllConversations);
 
 router.delete(
   "/conversations/:conversationId",

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import useChatContext from "../../chat/hooks/useChatContext";
 import UploadDropzone from "../components/UploadDropzone";
 import SelectedFile from "../components/SelectedFile";
 import {
@@ -53,6 +54,7 @@ const STAGES = [
 ];
 
 export default function UploadDocumentPage() {
+  const chat = useChatContext();
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState("");
   const [activeStep, setActiveStep] = useState(1); // 1 to 5
@@ -105,6 +107,7 @@ export default function UploadDocumentPage() {
         chunkCount: extraction.chunkCount,
       };
       setReadyDocument(completed);
+      chat?.reloadDocuments?.();
     } catch (requestError) {
       setServerError(
         requestError.message || "Processing failed. Please retry.",

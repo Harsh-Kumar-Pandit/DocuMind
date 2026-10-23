@@ -1,43 +1,71 @@
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import SectionHeading from "../../../components/ui/SectionHeading";
+import { pricingPlans } from "../../../lib/constants";
 
 export default function PricingSection() {
   return (
-    <section className="section shell pricing-section" id="pricing">
-      <SectionHeading
-        eyebrow="Simple, transparent pricing"
-        title="Start with the essentials."
-        text="We’re keeping pricing honest while we build the best document workspace for you."
-        center
-      />
-      <div className="pricing-card">
-        <div>
-          <span className="plan-label">THE STARTING POINT</span>
-          <h3>Free</h3>
-          <p>Explore the core DocuMind experience at no cost.</p>
-          <ul>
-            <li>
-              <Check size={15} />
-              Chat with your documents
-            </li>
-            <li>
-              <Check size={15} />
-              Summaries and source-backed answers
-            </li>
-            <li>
-              <Check size={15} />
-              No payment details required
-            </li>
-          </ul>
-        </div>
-        <div className="price-side">
-          <span className="price">$0</span>
-          <span>to get started</span>
-          <Button href="/signup">
-            Create a free account <ArrowRight size={15} />
-          </Button>
-          <small>Paid plans are coming later.</small>
+    <section className="section pricing-section" id="pricing">
+      <div className="shell">
+        <SectionHeading
+          eyebrow="PRICING"
+          title="Simple, transparent pricing."
+          text="Start free, upgrade when you need more."
+          center
+        />
+
+        <div className="pricing-cards-grid">
+          {pricingPlans.map(
+            ({
+              name,
+              badge,
+              subtitle,
+              price,
+              period,
+              popular,
+              features,
+              ctaText,
+              ctaVariant,
+            }) => (
+              <div
+                className={`pricing-plan-card ${popular ? "popular" : ""}`}
+                key={name}
+              >
+                {badge && <span className="pricing-popular-badge">{badge}</span>}
+
+                <div className="pricing-plan-header">
+                  <h3 className="pricing-plan-name">{name}</h3>
+                  <p className="pricing-plan-sub">{subtitle}</p>
+                </div>
+
+                <div className="pricing-amount-row">
+                  <span className="pricing-price">{price}</span>
+                  <span className="pricing-period">{period}</span>
+                </div>
+
+                <ul className="pricing-features-list">
+                  {features.map((feature) => (
+                    <li key={feature} className="pricing-feature-item">
+                      <span className="feature-check-icon">
+                        <Check size={13} strokeWidth={2.8} />
+                      </span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="pricing-action">
+                  <Button
+                    href="/signup"
+                    variant={ctaVariant}
+                    className={`pricing-btn ${popular ? "popular-btn" : ""}`}
+                  >
+                    {ctaText}
+                  </Button>
+                </div>
+              </div>
+            )
+          )}
         </div>
       </div>
     </section>

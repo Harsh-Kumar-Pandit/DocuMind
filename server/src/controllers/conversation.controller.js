@@ -149,11 +149,23 @@ export async function deleteConversation(req, res) {
   }
 }
 
+export async function deleteAllConversations(req, res) {
+  try {
+    const result = await prisma.conversation.deleteMany({
+      where: { document: { ownerId: req.user.id } },
+    });
+    return res.status(200).json({ deleted: result.count });
+  } catch (error) {
+    console.error("Delete all conversations failed:", error.message);
+    return res.status(500).json({ message: "Could not clear chat history." });
+  }
+}
+
 
 export async function sendConversationMessage(req, res) {
   try {
     const { conversationId } = req.params;
-    const { question, documentId } = req.body;
+    const { question, documentId, responseLength } = req.body;
 
     if (typeof question !== "string" || !question.trim()) {
       return res.status(400).json({
@@ -188,10 +200,7 @@ export async function sendConversationMessage(req, res) {
     const cleanQuestion = question.trim();
 
     // Generate the answer using the existing RAG service.
-    const result = await chatWithDocument(
-      conversation.documentId,
-      cleanQuestion
-    );
+    const result = await chatWithDocument(conversation.documentId, cleanQuestion, responseLength);
 
     // Save the question and answer together.
     const response = await prisma.$transaction(async (tx) => {

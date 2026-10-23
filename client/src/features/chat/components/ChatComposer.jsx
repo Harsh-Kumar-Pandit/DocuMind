@@ -46,19 +46,28 @@ export default function ChatComposer({
     const question = value.trim();
     if (!question || disabled || sending) return;
 
+    // Immediately clear composer input so the question goes straight to the chat
+    if (isControlled) {
+      onControlledChange?.("");
+    } else {
+      setInternalValue("");
+    }
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+
     try {
       await onSend(question);
+    } catch {
+      // If sending fails, restore question in composer so user does not lose input
       if (isControlled) {
-        onControlledChange?.("");
+        onControlledChange?.(question);
       } else {
-        setInternalValue("");
+        setInternalValue(question);
       }
       if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
         textareaRef.current.focus();
       }
-    } catch {
-      // Keep question in composer if sending fails so user does not lose input
     }
   };
 
@@ -80,7 +89,9 @@ export default function ChatComposer({
           placeholder={
             disabled
               ? "Select a ready document to start asking questions…"
-              : "Ask a question about your document…"
+              : sending
+                ? "DocuMind is generating an answer…"
+                : "Ask a question about your document…"
           }
           disabled={disabled || sending}
           rows={1}
@@ -99,11 +110,7 @@ export default function ChatComposer({
             aria-label="Send message"
             disabled={disabled || sending || !value.trim()}
           >
-            {sending ? (
-              <span className="composer-spinner" />
-            ) : (
-              <ArrowUp size={16} />
-            )}
+            <ArrowUp size={16} />
           </button>
         </div>
       </form>
