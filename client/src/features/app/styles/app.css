@@ -1,0 +1,446 @@
+/* ==========================================================================
+   DocuMind — Shared Application Shell & Navigation Styles
+   Universal sidebar, topbar, responsive drawers, and typography tokens
+   ========================================================================== */
+
+:root {
+  --sidebar-width: 280px;
+  --topbar-height: 68px;
+  --color-primary: #5938f5;
+  --color-primary-hover: #4726de;
+  --color-primary-light: #eeeaff;
+  --color-bg-workspace: #f8f8fd;
+  --color-surface: #ffffff;
+  --color-border: #e7e6f1;
+  --color-border-subtle: #ecebf5;
+  --color-text-main: #1e223b;
+  --color-text-muted: #707794;
+  --color-text-subtle: #9ea2b8;
+}
+
+/* 1. Viewport-Height Application Shell */
+.app-shell {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  display: flex;
+  background: var(--color-bg-workspace);
+  color: var(--color-text-main);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Mobile Backdrop Overlay */
+.app-mobile-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 14, 43, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.app-mobile-backdrop.open {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   2. Shared Workspace Sidebar (Identical across all routes)
+   ========================================================================== */
+.shared-sidebar {
+  width: var(--sidebar-width);
+  flex: 0 0 var(--sidebar-width);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 20px 16px 16px;
+  position: relative;
+  z-index: 30;
+}
+
+/* Brand Logo Header */
+.shared-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 18px;
+  flex: 0 0 auto;
+}
+
+.sidebar-close-btn {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: #727796;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-close-btn:hover {
+  background: #f1effd;
+  color: var(--color-primary);
+}
+
+/* Navigation Links */
+.shared-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.shared-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: #636986;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.shared-nav-link:hover {
+  background: #f4f3fb;
+  color: #21253e;
+}
+
+.shared-nav-link.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.shared-sidebar-divider {
+  height: 1px;
+  background: var(--color-border-subtle);
+  margin: 14px 0 12px;
+  flex: 0 0 auto;
+}
+
+/* Chat Controls inside Sidebar when on Chat Route */
+.sidebar-chat-action {
+  flex: 0 0 auto;
+  margin-bottom: 14px;
+}
+
+.sidebar-chat-controls {
+  flex: 0 0 auto;
+}
+
+.sidebar-scrollable-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 4px;
+  padding-right: 2px;
+}
+
+.sidebar-scrollable-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scrollable-body::-webkit-scrollbar-thumb {
+  background: #dcdbf0;
+  border-radius: 4px;
+}
+
+/* Promotional Card inside Sidebar on Non-Chat Routes */
+.sidebar-info-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 12px;
+}
+
+.sidebar-promo-card {
+  display: flex;
+  gap: 10px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f3f1ff, #faf9ff);
+  border: 1px solid #ebe6ff;
+  color: #6650db;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.promo-card-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.promo-card-content strong {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #322588;
+  margin-bottom: 3px;
+}
+
+.promo-card-content p {
+  margin: 0;
+  font-size: 10px;
+  color: #7872a3;
+  line-height: 1.45;
+}
+
+/* Fixed Anchored Account Section at Bottom */
+.shared-sidebar-account {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 14px;
+  margin-top: auto;
+}
+
+.account-avatar-wrapper {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  background: #ebe6ff;
+  color: var(--color-primary);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-text-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.account-user-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #21253d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-user-email {
+  font-size: 9.5px;
+  color: var(--color-text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-logout-btn {
+  border: 0;
+  background: transparent;
+  color: #8c91a8;
+  padding: 7px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.account-logout-btn:hover {
+  background: #f3f1fd;
+  color: var(--color-primary);
+}
+
+/* ==========================================================================
+   3. Main Area & Topbar
+   ========================================================================== */
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Topbar on non-chat pages */
+.app-topbar {
+  height: var(--topbar-height);
+  min-height: var(--topbar-height);
+  flex: 0 0 var(--topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
+  z-index: 10;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-sidebar-toggle {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: #6a6f8b;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.topbar-sidebar-toggle:hover {
+  background: #f2f0fd;
+  color: var(--color-primary);
+}
+
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.topbar-breadcrumb span {
+  color: var(--color-text-subtle);
+}
+
+.breadcrumb-slash {
+  color: #d0d2df;
+  font-weight: 400;
+}
+
+.topbar-breadcrumb strong {
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6d728e;
+}
+
+.online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #26965d;
+}
+
+/* Main Content Area */
+.app-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 32px 32px;
+}
+
+.app-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-content::-webkit-scrollbar-thumb {
+  background: #dedbf0;
+  border-radius: 4px;
+}
+
+/* Chat content fills 100% without outer padding */
+.app-content-chat {
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.app-route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #faf9ff;
+  color: #68708c;
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   4. Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 768px) {
+  .shared-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 285px;
+    box-shadow: 10px 0 35px rgba(25, 18, 64, 0.18);
+    transform: translateX(-101%);
+    transition: transform 0.25s ease;
+    z-index: 50;
+  }
+
+  .shared-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: grid;
+    place-items: center;
+  }
+
+  .topbar-sidebar-toggle {
+    display: grid;
+    place-items: center;
+  }
+
+  .app-topbar {
+    padding: 0 16px;
+    height: 60px;
+    min-height: 60px;
+    flex: 0 0 60px;
+  }
+
+  .app-content {
+    padding: 16px;
+  }
+
+  .topbar-right {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shared-sidebar,
+  .app-mobile-backdrop {
+    transition: none !important;
+  }
+}
