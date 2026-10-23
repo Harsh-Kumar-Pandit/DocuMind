@@ -2,3 +2,4 @@
 @media(max-width:800px){.auth-page{display:block;min-height:100vh}.auth-showcase{display:none}.auth-brand-mobile{display:block;padding:25px 24px 0}.auth-panel{min-height:calc(100vh - 74px);padding:35px 24px 50px;align-items:flex-start}.auth-form-wrap{max-width:410px}.auth-heading h2{font-size:32px}}
 @media(prefers-reduced-motion:reduce){.spin{animation:none}.auth-submit{transition:none}}
 .auth-back-btn{display:inline-flex;align-items:center;gap:6px;color:#707794;font-size:12px;text-decoration:none;margin-bottom:18px;transition:color .2s ease}.auth-back-btn:hover{color:#5938f5}
+.auth-back-btn{padding:8px 12px;border:1px solid #f0cbd1;border-radius:8px;background:#fff5f6;color:#c65062;font-weight:600}.auth-back-btn:hover{background:#fdebed;border-color:#e3aab4;color:#a83c50}
